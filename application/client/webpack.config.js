@@ -92,13 +92,6 @@ const config = {
           { loader: "postcss-loader" },
         ],
       },
-      {
-        resourceQuery: /binary/,
-        type: "asset/resource",
-        generator: {
-          filename: "assets/[contenthash][ext]",
-        },
-      },
     ],
   },
   output: {
@@ -115,11 +108,6 @@ const config = {
     alias: {
       "bayesian-bm25$": path.resolve(__dirname, "node_modules", "bayesian-bm25/dist/index.js"),
       ["kuromoji$"]: path.resolve(__dirname, "node_modules", "kuromoji/build/kuromoji.js"),
-      "@imagemagick/magick-wasm/magick.wasm$": path.resolve(
-        __dirname,
-        "node_modules",
-        "@imagemagick/magick-wasm/dist/magick.wasm",
-      ),
     },
     fallback: {
       fs: false,
