@@ -5,6 +5,7 @@ const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HTMLInlineCSSWebpackPlugin = require("html-inline-css-webpack-plugin").default;
 const webpack = require("webpack");
 
 const SRC_PATH = path.resolve(__dirname, "./src");
@@ -39,6 +40,7 @@ const plugins = [
     inject: "body",
     template: path.resolve(SRC_PATH, "./index.html"),
   }),
+  new HTMLInlineCSSWebpackPlugin({ leaveCSSFile: true }),
 ];
 
 if (ANALYZE_MODE) {
