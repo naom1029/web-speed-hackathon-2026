@@ -16,6 +16,7 @@ const ANALYZE_MODE =
 
 const plugins = [
   new webpack.DefinePlugin({
+    "process.env.NODE_ENV": JSON.stringify("production"),
     "process.env.BUILD_DATE": JSON.stringify(new Date().toISOString()),
     // Heroku では SOURCE_VERSION 環境変数から commit hash を参照できます
     "process.env.COMMIT_HASH": JSON.stringify(process.env.SOURCE_VERSION || ""),
@@ -124,14 +125,12 @@ const config = {
     },
   },
   optimization: {
-    minimize: true,
-    splitChunks: {
-      chunks: "all",
-    },
-    concatenateModules: true,
-    usedExports: true,
-    providedExports: true,
-    sideEffects: true,
+    minimize: false,
+    splitChunks: false,
+    concatenateModules: false,
+    usedExports: false,
+    providedExports: false,
+    sideEffects: false,
   },
   cache: {
     type: "filesystem",
