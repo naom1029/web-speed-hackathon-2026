@@ -1,6 +1,6 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
-import { col, Op } from "sequelize";
+import { Op } from "sequelize";
 
 import { eventhub } from "@web-speed-hackathon-2026/server/src/eventhub";
 import {
@@ -20,21 +20,18 @@ directMessageRouter.get("/dm", async (req, res) => {
     where: {
       [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
     },
-    include: [
-      { association: "initiator", include: [{ association: "profileImage" }] },
-      { association: "member", include: [{ association: "profileImage" }] },
-      {
-        association: "messages",
-        include: [{ association: "sender", include: [{ association: "profileImage" }] }],
-        order: [["createdAt", "DESC"]],
-        limit: 1,
-        required: true,
-      },
-    ],
-    order: [[col("messages.createdAt"), "DESC"]],
   });
 
-  return res.status(200).type("application/json").send(conversations);
+  // 最新メッセージの日時でソート（default scopeが全メッセージを含むため）
+  const sorted = conversations
+    .filter((c) => c.messages && c.messages.length > 0)
+    .sort((a, b) => {
+      const aLast = a.messages![a.messages!.length - 1]!.createdAt.getTime();
+      const bLast = b.messages![b.messages!.length - 1]!.createdAt.getTime();
+      return bLast - aLast;
+    });
+
+  return res.status(200).type("application/json").send(sorted);
 });
 
 directMessageRouter.post("/dm", async (req, res) => {
