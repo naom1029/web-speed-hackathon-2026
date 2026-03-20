@@ -111,6 +111,9 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
+  const limit = req.query["limit"] != null ? Number(req.query["limit"]) : 30;
+  const offset = req.query["offset"] != null ? Number(req.query["offset"]) : undefined;
+
   const conversation = await DirectMessageConversation.unscoped().findOne({
     where: {
       id: req.params.conversationId,
@@ -119,20 +122,31 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     include: [
       { association: "initiator", include: [{ association: "profileImage" }] },
       { association: "member", include: [{ association: "profileImage" }] },
-      {
-        association: "messages",
-        attributes: ["id", "body", "createdAt", "isRead", "senderId"],
-        include: [{ association: "sender", attributes: ["id"] }],
-        order: [["createdAt", "ASC"]],
-        required: false,
-      },
     ],
   });
   if (conversation === null) {
     throw new httpErrors.NotFound();
   }
 
-  return res.status(200).type("application/json").send(conversation);
+  // メッセージを別クエリで取得（最新N件を降順で取得し、昇順に並べ替え）
+  const messages = await DirectMessage.findAll({
+    attributes: ["id", "body", "createdAt", "isRead", "senderId"],
+    include: [{ association: "sender", attributes: ["id"] }],
+    where: { conversationId: req.params.conversationId },
+    order: [["createdAt", "DESC"]],
+    limit,
+    offset,
+  });
+
+  const messagesJson = messages.map((m) => m.toJSON());
+  messagesJson.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  const result = {
+    ...conversation.toJSON(),
+    messages: messagesJson,
+  };
+
+  return res.status(200).type("application/json").send(result);
 });
 
 directMessageRouter.ws("/dm/:conversationId", async (req, _res) => {
