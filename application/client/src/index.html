@@ -9,5 +9,11 @@
   </head>
   <body class="bg-cax-canvas text-cax-text">
     <div id="app"></div>
+    <script>
+      window.__PREFETCH__ = {
+        "/api/v1/me": fetch("/api/v1/me", { credentials: "same-origin" }).then(function(r) { return r.ok ? r.json() : Promise.reject(); }).catch(function() { return null; }),
+        "/api/v1/posts?limit=30&offset=0": fetch("/api/v1/posts?limit=30&offset=0").then(function(r) { return r.json(); }).catch(function() { return []; }),
+      };
+    </script>
   </body>
 </html>
