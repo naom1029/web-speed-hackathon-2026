@@ -1,5 +1,5 @@
 import { formatLongDate } from "@web-speed-hackathon-2026/client/src/utils/format_date";
-import { MouseEventHandler, useCallback } from "react";
+import { MouseEventHandler, useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
@@ -22,20 +22,32 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
   return false;
 };
 
-/**
- * @typedef {object} Props
- * @property {Models.Post} post
- */
 interface Props {
   post: Models.Post;
 }
 
 export const TimelineItem = ({ post }: Props) => {
   const navigate = useNavigate();
+  const ref = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  /**
-   * ボタンやリンク以外の箇所をクリックしたとき かつ 文字が選択されてないとき、投稿詳細ページに遷移する
-   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleClick = useCallback<MouseEventHandler>(
     (ev) => {
       const isSelectedText = document.getSelection()?.isCollapsed === false;
@@ -46,8 +58,12 @@ export const TimelineItem = ({ post }: Props) => {
     [post, navigate],
   );
 
+  if (!isVisible) {
+    return <article ref={ref} className="px-1 sm:px-4" style={{ minHeight: "120px" }} />;
+  }
+
   return (
-    <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
+    <article ref={ref} className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
         <div className="shrink-0 grow-0 pr-2 sm:pr-4">
           <Link
