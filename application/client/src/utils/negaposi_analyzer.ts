@@ -1,7 +1,5 @@
 import Bluebird from "bluebird";
 import kuromoji, { type Tokenizer, type IpadicFeatures } from "kuromoji";
-import analyze from "negaposi-analyzer-ja";
-
 async function getTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
   const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath: "/dicts" }));
   return await builder.buildAsync();
@@ -13,6 +11,7 @@ type SentimentResult = {
 };
 
 export async function analyzeSentiment(text: string): Promise<SentimentResult> {
+  const { default: analyze } = await import("negaposi-analyzer-ja");
   const tokenizer = await getTokenizer();
   const tokens = tokenizer.tokenize(text);
 
