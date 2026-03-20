@@ -24,14 +24,16 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
 
 interface Props {
   post: Models.Post;
+  isPriority?: boolean;
 }
 
-export const TimelineItem = ({ post }: Props) => {
+export const TimelineItem = ({ post, isPriority = false }: Props) => {
   const navigate = useNavigate();
   const ref = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(isPriority);
 
   useEffect(() => {
+    if (isPriority) return;
     const el = ref.current;
     if (!el) return;
 
@@ -46,7 +48,7 @@ export const TimelineItem = ({ post }: Props) => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [isPriority]);
 
   const handleClick = useCallback<MouseEventHandler>(
     (ev) => {
@@ -72,6 +74,9 @@ export const TimelineItem = ({ post }: Props) => {
           >
             <img
               alt={post.user.profileImage.alt}
+              decoding={isPriority ? "sync" : "async"}
+              fetchPriority={isPriority ? "high" : "auto"}
+              loading={isPriority ? "eager" : "lazy"}
               src={getProfileImagePath(post.user.profileImage.id)}
             />
           </Link>
