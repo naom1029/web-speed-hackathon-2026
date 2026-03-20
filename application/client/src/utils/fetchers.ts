@@ -6,7 +6,18 @@ export async function fetchBinary(url: string): Promise<ArrayBuffer> {
   return res.arrayBuffer();
 }
 
+declare global {
+  interface Window {
+    __PREFETCH__?: Record<string, Promise<unknown>>;
+  }
+}
+
 export async function fetchJSON<T>(url: string): Promise<T> {
+  const prefetched = window.__PREFETCH__?.[url];
+  if (prefetched) {
+    delete window.__PREFETCH__![url];
+    return prefetched as Promise<T>;
+  }
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`fetchJSON failed: ${res.status}`);
