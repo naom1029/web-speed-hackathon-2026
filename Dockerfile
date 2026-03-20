@@ -31,6 +31,8 @@ RUN --mount=type=cache,target=/pnpm/store CI=true pnpm install --frozen-lockfile
 
 FROM base
 
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 COPY --from=runtime-deps /app /app
 COPY ./application/server/package.json ./server/package.json
 COPY ./application/server/tsconfig.json ./server/tsconfig.json

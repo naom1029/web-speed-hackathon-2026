@@ -1,14 +1,18 @@
+import { execFile } from "child_process";
 import { promises as fs } from "fs";
+import os from "os";
 import path from "path";
+import { promisify } from "util";
 
 import { Router } from "express";
-import { fileTypeFromBuffer } from "file-type";
 import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
-const ALLOWED_VIDEO_EXTENSIONS = new Set(["mp4", "webm", "gif", "mov"]);
+const execFileAsync = promisify(execFile);
+
+const OUTPUT_EXTENSION = "webp";
 
 export const movieRouter = Router();
 
@@ -20,17 +24,34 @@ movieRouter.post("/movies", async (req, res) => {
     throw new httpErrors.BadRequest();
   }
 
-  const type = await fileTypeFromBuffer(req.body);
-  if (type === undefined || !ALLOWED_VIDEO_EXTENSIONS.has(type.ext)) {
-    throw new httpErrors.BadRequest("Invalid file type");
+  const movieId = uuidv4();
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "movie-"));
+  const inputPath = path.join(tmpDir, `input`);
+  const outputPath = path.join(tmpDir, `output.${OUTPUT_EXTENSION}`);
+
+  try {
+    await fs.writeFile(inputPath, req.body);
+
+    // Convert to WebP animation: first 5 seconds, square crop, 10fps, 500px, no audio
+    await execFileAsync("ffmpeg", [
+      "-i", inputPath,
+      "-t", "5",
+      "-r", "10",
+      "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=500:500",
+      "-an",
+      "-loop", "0",
+      "-y",
+      outputPath,
+    ]);
+
+    const outputBuffer = await fs.readFile(outputPath);
+
+    const filePath = path.resolve(UPLOAD_PATH, `./movies/${movieId}.${OUTPUT_EXTENSION}`);
+    await fs.mkdir(path.resolve(UPLOAD_PATH, "movies"), { recursive: true });
+    await fs.writeFile(filePath, outputBuffer);
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true });
   }
 
-  const movieId = uuidv4();
-  const ext = type.ext;
-
-  const filePath = path.resolve(UPLOAD_PATH, `./movies/${movieId}.${ext}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "movies"), { recursive: true });
-  await fs.writeFile(filePath, req.body);
-
-  return res.status(200).type("application/json").send({ id: movieId, extension: ext });
+  return res.status(200).type("application/json").send({ id: movieId, extension: OUTPUT_EXTENSION });
 });
