@@ -1,4 +1,3 @@
-import kuromoji, { type Tokenizer, type IpadicFeatures } from "kuromoji";
 import {
   useCallback,
   useEffect,
@@ -11,29 +10,7 @@ import {
 } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
-import {
-  extractTokens,
-  filterSuggestionsBM25,
-} from "@web-speed-hackathon-2026/client/src/utils/bm25_search";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
-
-let tokenizerPromise: Promise<Tokenizer<IpadicFeatures>> | null = null;
-
-function getTokenizer(): Promise<Tokenizer<IpadicFeatures>> {
-  if (!tokenizerPromise) {
-    tokenizerPromise = new Promise((resolve, reject) => {
-      kuromoji.builder({ dicPath: "/dicts" }).build((err, tokenizer) => {
-        if (err) {
-          tokenizerPromise = null;
-          reject(err);
-        } else {
-          resolve(tokenizer);
-        }
-      });
-    });
-  }
-  return tokenizerPromise;
-}
 
 interface Props {
   isStreaming: boolean;
@@ -97,12 +74,10 @@ function highlightMatchByTokens(text: string, queryTokens: string[]): React.Reac
 export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const [tokenizer, setTokenizer] = useState<Tokenizer<IpadicFeatures> | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [queryTokens, setQueryTokens] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const suggestionsCacheRef = useRef<string[] | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // サジェストが更新されたら一番下にスクロール
@@ -112,44 +87,24 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
     }
   }, [suggestions, showSuggestions]);
 
-  // 初回にkuromojiトークナイザーを構築（Promiseキャッシュ）
-  useEffect(() => {
-    let mounted = true;
+  const updateSuggestions = useCallback(async (value: string) => {
+    if (!value.trim()) {
+      setSuggestions([]);
+      setQueryTokens([]);
+      setShowSuggestions(false);
+      return;
+    }
 
-    getTokenizer().then((t) => {
-      if (mounted) setTokenizer(t);
-    });
+    const res = await fetchJSON<{ suggestions: string[] }>(
+      `/api/v1/crok/suggestions?q=${encodeURIComponent(value)}`,
+    );
+    const results = res.suggestions;
+    const tokens = value.trim().split(/\s+/);
 
-    return () => {
-      mounted = false;
-    };
+    setQueryTokens(tokens);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0);
   }, []);
-
-  const updateSuggestions = useCallback(
-    async (value: string) => {
-      if (!tokenizer || !value.trim()) {
-        setSuggestions([]);
-        setQueryTokens([]);
-        setShowSuggestions(false);
-        return;
-      }
-
-      let candidates = suggestionsCacheRef.current;
-      if (!candidates) {
-        const res = await fetchJSON<{ suggestions: string[] }>("/api/v1/crok/suggestions");
-        candidates = res.suggestions;
-        suggestionsCacheRef.current = candidates;
-      }
-
-      const tokens = extractTokens(tokenizer.tokenize(value));
-      const results = filterSuggestionsBM25(tokenizer, candidates, tokens);
-
-      setQueryTokens(tokens);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-    },
-    [tokenizer],
-  );
 
   useEffect(() => {
     if (debounceTimerRef.current) {
