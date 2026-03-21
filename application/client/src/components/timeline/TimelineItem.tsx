@@ -107,7 +107,7 @@ export const TimelineItem = ({ post, isPriority = false }: Props) => {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} />
+              <ImageArea images={post.images} isPriority={isPriority} />
             </div>
           ) : null}
           {post.movie ? (
