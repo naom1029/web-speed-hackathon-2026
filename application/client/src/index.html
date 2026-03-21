@@ -4,8 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CaX</title>
-    <link rel="preload" href="/fonts/ReiNoAreMincho-Regular.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/ReiNoAreMincho-Heavy.woff2" as="font" type="font/woff2" crossorigin />
+    <script>
+      if (location.pathname === "/terms") {
+        var l1 = window.document.createElement("link"); l1.rel = "preload"; l1.href = "/fonts/ReiNoAreMincho-Regular.woff2"; l1.as = "font"; l1.type = "font/woff2"; l1.crossOrigin = ""; window.document.head.appendChild(l1);
+        var l2 = window.document.createElement("link"); l2.rel = "preload"; l2.href = "/fonts/ReiNoAreMincho-Heavy.woff2"; l2.as = "font"; l2.type = "font/woff2"; l2.crossOrigin = ""; window.document.head.appendChild(l2);
+      }
+    </script>
   </head>
   <body class="bg-cax-canvas text-cax-text">
     <div id="app"></div>
