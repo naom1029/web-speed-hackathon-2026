@@ -3,15 +3,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
-import { sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { ApiError, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
   id: string;
   onUpdateActiveUser: (user: Models.User) => void;
 }
 
-function getErrorCode(_err: unknown, type: "signin" | "signup"): string {
+function getErrorCode(err: unknown, type: "signin" | "signup"): string {
   if (type === "signup") {
+    if (err instanceof ApiError && err.code === "USERNAME_TAKEN") {
+      return "ユーザー名が使われています";
+    }
     return "登録に失敗しました";
   } else {
     return "パスワードが異なります";

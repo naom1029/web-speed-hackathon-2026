@@ -39,6 +39,14 @@ export async function sendFile<T>(url: string, file: File): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export class ApiError extends Error {
+  code: string | undefined;
+  constructor(message: string, code?: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
 export async function sendJSON<T>(url: string, data: object): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
@@ -48,7 +56,12 @@ export async function sendJSON<T>(url: string, data: object): Promise<T> {
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    throw new Error(`sendJSON failed: ${res.status}`);
+    let code: string | undefined;
+    try {
+      const body = await res.json();
+      code = body.code;
+    } catch {}
+    throw new ApiError(`sendJSON failed: ${res.status}`, code);
   }
   return res.json() as Promise<T>;
 }
