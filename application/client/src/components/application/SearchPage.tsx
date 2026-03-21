@@ -38,8 +38,12 @@ export const SearchPage = ({ query, results }: Props) => {
     }
 
     let isMounted = true;
-    import("@web-speed-hackathon-2026/client/src/utils/negaposi_analyzer")
-      .then(({ analyzeSentiment }) => analyzeSentiment(parsed.keywords))
+    fetch("/api/v1/sentiment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: parsed.keywords }),
+    })
+      .then((res) => res.json())
       .then((result) => {
         if (isMounted) {
           setIsNegative(result.label === "negative");

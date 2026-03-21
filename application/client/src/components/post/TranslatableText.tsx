@@ -18,16 +18,16 @@ export const TranslatableText = ({ text }: Props) => {
         (async () => {
           updateState({ type: "loading" });
           try {
-            const { createTranslator } = await import("@web-speed-hackathon-2026/client/src/utils/create_translator");
-            using translator = await createTranslator({
-              sourceLanguage: "ja",
-              targetLanguage: "en",
+            const res = await fetch("/api/v1/translate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text: state.text, sourceLanguage: "ja", targetLanguage: "en" }),
             });
-            const result = await translator.translate(state.text);
+            const data = await res.json();
 
             updateState({
               type: "translated",
-              text: result,
+              text: data.result,
               original: state.text,
             });
           } catch {
