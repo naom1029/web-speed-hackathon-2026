@@ -16,8 +16,10 @@
     <script>
       window.__PREFETCH__ = {
         "/api/v1/me": fetch("/api/v1/me", { credentials: "same-origin" }).then(function(r) { if (r.ok) return r.json(); return r.text().then(function() { return Promise.reject(); }); }).catch(function() { return null; }),
-        "/api/v1/posts?limit=30&offset=0": fetch("/api/v1/posts?limit=30&offset=0").then(function(r) { return r.json(); }).catch(function() { return []; }),
       };
+      if (location.pathname === "/") {
+        window.__PREFETCH__["/api/v1/posts?limit=30&offset=0"] = fetch("/api/v1/posts?limit=30&offset=0").then(function(r) { return r.json(); }).catch(function() { return []; });
+      }
     </script>
   </body>
 </html>
