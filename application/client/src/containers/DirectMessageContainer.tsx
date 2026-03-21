@@ -102,6 +102,8 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
         });
         setConversation((prev) => {
           if (!prev) return prev;
+          const exists = prev.messages.some((m) => m.id === message.id);
+          if (exists) return prev;
           return {
             ...prev,
             messages: [...prev.messages, message],
