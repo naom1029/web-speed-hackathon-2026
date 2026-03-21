@@ -123,7 +123,23 @@ const config = {
   optimization: {
     minimize: true,
     splitChunks: {
-      chunks: "all",
+      chunks: "async",
+      maxAsyncSize: 160000,
+      minRemainingSize: 0,
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: "vendor",
+          chunks: "initial",
+          reuseExistingChunk: true,
+          priority: -10,
+        },
+        default: {
+          minChunks: 2,
+          reuseExistingChunk: true,
+          priority: -20,
+        },
+      },
     },
     concatenateModules: true,
     usedExports: true,
